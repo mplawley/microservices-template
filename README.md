@@ -4,7 +4,7 @@ This is a template to quickly get started with microservices. This template sets
 
 - Spring Boot for the 'api' (just a skeleton for a microservice here)
 - Angular for the front-end, which is deployed with the proxy
-- Jhipster UAA (Oauth2, JWT)
+- JHipster UAA (Oauth2, JWT)
 - JHipster Registry for services
 - MongoDB
 - Hazelcast
