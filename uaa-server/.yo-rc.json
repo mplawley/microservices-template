@@ -1,0 +1,44 @@
+{
+  "generator-jhipster": {
+    "promptValues": {
+      "packageName": "com.houselawlez.microtemplate",
+      "nativeLanguage": "en"
+    },
+    "jhipsterVersion": "6.0.0",
+    "applicationType": "uaa",
+    "baseName": "uaa",
+    "packageName": "com.houselawlez.microtemplate",
+    "packageFolder": "com/houselawlez/microtemplate",
+    "serverPort": "9999",
+    "authenticationType": "uaa",
+    "cacheProvider": "hazelcast",
+    "enableHibernateCache": false,
+    "websocket": false,
+    "databaseType": "mongodb",
+    "devDatabaseType": "mongodb",
+    "prodDatabaseType": "mongodb",
+    "searchEngine": false,
+    "messageBroker": false,
+    "serviceDiscoveryType": "eureka",
+    "buildTool": "maven",
+    "enableSwaggerCodegen": false,
+    "jwtSecretKey": "NzlhNWUxZGYyZjVlNzMzYWZjZDZjNDA3NWUyOWNiODMyY2VkMDg2NDhlNDI5MDNlY2QzMmZhMjkzZGJhNGM3ZTNmZTg1NjRhODdhOGRjODU5MTViZjUxMWI3N2U4ODZkMWY4YmE5MDcxNDYxZGU4MDdiNDdjNjExNTY4YzY0Y2Q=",
+    "testFrameworks": [
+      "cucumber"
+    ],
+    "jhiPrefix": "jhi",
+    "entitySuffix": "",
+    "dtoSuffix": "DTO",
+    "otherModules": [],
+    "enableTranslation": true,
+    "clientPackageManager": "npm",
+    "nativeLanguage": "en",
+    "languages": [
+      "en",
+      "ja",
+      "ko",
+      "es"
+    ],
+    "skipClient": true
+  }
+}

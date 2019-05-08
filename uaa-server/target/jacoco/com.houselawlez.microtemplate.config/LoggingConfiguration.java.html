@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LoggingConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Uaa</a> &gt; <a href="index.source.html" class="el_package">com.houselawlez.microtemplate.config</a> &gt; <span class="el_source">LoggingConfiguration.java</span></div><h1>LoggingConfiguration.java</h1><pre class="source lang-java linenums">package com.houselawlez.microtemplate.config;
+
+import java.net.InetSocketAddress;
+import java.util.Iterator;
+import java.util.Optional;
+
+import io.github.jhipster.config.JHipsterProperties;
+
+import ch.qos.logback.classic.AsyncAppender;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.boolex.OnMarkerEvaluator;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggerContextListener;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.filter.EvaluatorFilter;
+import ch.qos.logback.core.spi.ContextAwareBase;
+import ch.qos.logback.core.spi.FilterReply;
+import net.logstash.logback.appender.LogstashTcpSocketAppender;
+import net.logstash.logback.composite.ContextJsonProvider;
+import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
+import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider;
+import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
+import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
+import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
+import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
+import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
+import net.logstash.logback.encoder.LogstashEncoder;
+import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.info.BuildProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@RefreshScope
+public class LoggingConfiguration {
+
+    private static final String CONSOLE_APPENDER_NAME = &quot;CONSOLE&quot;;
+
+    private static final String LOGSTASH_APPENDER_NAME = &quot;LOGSTASH&quot;;
+
+    private static final String ASYNC_LOGSTASH_APPENDER_NAME = &quot;ASYNC_LOGSTASH&quot;;
+
+<span class="fc" id="L53">    private final Logger log = LoggerFactory.getLogger(LoggingConfiguration.class);</span>
+
+<span class="fc" id="L55">    private LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();</span>
+
+    private final String appName;
+
+    private final String serverPort;
+
+    private final String version;
+
+    private final JHipsterProperties jHipsterProperties;
+
+    public LoggingConfiguration(@Value(&quot;${spring.application.name}&quot;) String appName, @Value(&quot;${server.port}&quot;) String serverPort,
+<span class="fc" id="L66">         Optional&lt;BuildProperties&gt; buildProperties, JHipsterProperties jHipsterProperties) {</span>
+<span class="fc" id="L67">        this.appName = appName;</span>
+<span class="fc" id="L68">        this.serverPort = serverPort;</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        this.version = buildProperties.isPresent() ? buildProperties.get().getVersion() : &quot;&quot;;</span>
+<span class="fc" id="L70">        this.jHipsterProperties = jHipsterProperties;</span>
+<span class="pc bpc" id="L71" title="1 of 2 branches missed.">        if (this.jHipsterProperties.getLogging().isUseJsonFormat()) {</span>
+<span class="fc" id="L72">            addJsonConsoleAppender(context);</span>
+        }
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (this.jHipsterProperties.getLogging().getLogstash().isEnabled()) {</span>
+<span class="fc" id="L75">            addLogstashTcpSocketAppender(context);</span>
+        }
+<span class="pc bpc" id="L77" title="3 of 4 branches missed.">        if (this.jHipsterProperties.getLogging().isUseJsonFormat() || this.jHipsterProperties.getLogging().getLogstash().isEnabled()) {</span>
+<span class="fc" id="L78">            addContextListener(context);</span>
+        }
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (this.jHipsterProperties.getMetrics().getLogs().isEnabled()) {</span>
+<span class="fc" id="L81">            setMetricsMarkerLogbackFilter(context);</span>
+        }
+<span class="fc" id="L83">    }</span>
+
+    private void addJsonConsoleAppender(LoggerContext context) {
+<span class="fc" id="L86">        log.info(&quot;Initializing Console logging&quot;);</span>
+        
+        // More documentation is available at: https://github.com/logstash/logstash-logback-encoder
+<span class="fc" id="L89">        ConsoleAppender&lt;ILoggingEvent&gt; consoleAppender = new ConsoleAppender&lt;&gt;();</span>
+<span class="fc" id="L90">        consoleAppender.setContext(context);</span>
+<span class="fc" id="L91">        consoleAppender.setEncoder(compositeJsonEncoder(context));</span>
+<span class="fc" id="L92">        consoleAppender.setName(CONSOLE_APPENDER_NAME);</span>
+<span class="fc" id="L93">        consoleAppender.start();</span>
+
+<span class="fc" id="L95">        context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).detachAppender(CONSOLE_APPENDER_NAME);</span>
+<span class="fc" id="L96">        context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).addAppender(consoleAppender);</span>
+<span class="fc" id="L97">    }</span>
+
+    private void addLogstashTcpSocketAppender(LoggerContext context) {
+<span class="fc" id="L100">        log.info(&quot;Initializing Logstash logging&quot;);</span>
+
+        // More documentation is available at: https://github.com/logstash/logstash-logback-encoder
+<span class="fc" id="L103">        LogstashTcpSocketAppender logstashAppender = new LogstashTcpSocketAppender();</span>
+<span class="fc" id="L104">        logstashAppender.addDestinations(new InetSocketAddress(this.jHipsterProperties.getLogging().getLogstash().getHost(), this.jHipsterProperties.getLogging().getLogstash().getPort()));</span>
+<span class="fc" id="L105">        logstashAppender.setContext(context);</span>
+<span class="fc" id="L106">        logstashAppender.setEncoder(logstashEncoder());</span>
+<span class="fc" id="L107">        logstashAppender.setName(LOGSTASH_APPENDER_NAME);</span>
+<span class="fc" id="L108">        logstashAppender.start();</span>
+
+        // Wrap the appender in an Async appender for performance
+<span class="fc" id="L111">        AsyncAppender asyncLogstashAppender = new AsyncAppender();</span>
+<span class="fc" id="L112">        asyncLogstashAppender.setContext(context);</span>
+<span class="fc" id="L113">        asyncLogstashAppender.setName(ASYNC_LOGSTASH_APPENDER_NAME);</span>
+<span class="fc" id="L114">        asyncLogstashAppender.setQueueSize(this.jHipsterProperties.getLogging().getLogstash().getQueueSize());</span>
+<span class="fc" id="L115">        asyncLogstashAppender.addAppender(logstashAppender);</span>
+<span class="fc" id="L116">        asyncLogstashAppender.start();</span>
+
+<span class="fc" id="L118">        context.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME).addAppender(asyncLogstashAppender);</span>
+<span class="fc" id="L119">    }</span>
+
+    private LoggingEventCompositeJsonEncoder compositeJsonEncoder(LoggerContext context) {
+<span class="fc" id="L122">        final LoggingEventCompositeJsonEncoder compositeJsonEncoder = new LoggingEventCompositeJsonEncoder();</span>
+<span class="fc" id="L123">        compositeJsonEncoder.setContext(context);</span>
+<span class="fc" id="L124">        compositeJsonEncoder.setProviders(jsonProviders(context));</span>
+<span class="fc" id="L125">        compositeJsonEncoder.start();</span>
+<span class="fc" id="L126">        return compositeJsonEncoder;</span>
+    }
+    
+    private LogstashEncoder logstashEncoder() {
+<span class="fc" id="L130">        final LogstashEncoder logstashEncoder = new LogstashEncoder();</span>
+<span class="fc" id="L131">        logstashEncoder.setThrowableConverter(throwableConverter());</span>
+<span class="fc" id="L132">        logstashEncoder.setCustomFields(customFields());</span>
+<span class="fc" id="L133">        return logstashEncoder;</span>
+    }
+    
+    private LoggingEventJsonProviders jsonProviders(LoggerContext context) {
+<span class="fc" id="L137">        final LoggingEventJsonProviders jsonProviders = new LoggingEventJsonProviders();</span>
+<span class="fc" id="L138">        jsonProviders.addArguments(new ArgumentsJsonProvider());</span>
+<span class="fc" id="L139">        jsonProviders.addContext(new ContextJsonProvider&lt;&gt;());</span>
+<span class="fc" id="L140">        jsonProviders.addGlobalCustomFields(customFieldsJsonProvider());</span>
+<span class="fc" id="L141">        jsonProviders.addLogLevel(new LogLevelJsonProvider());</span>
+<span class="fc" id="L142">        jsonProviders.addLoggerName(loggerNameJsonProvider());</span>
+<span class="fc" id="L143">        jsonProviders.addMdc(new MdcJsonProvider());</span>
+<span class="fc" id="L144">        jsonProviders.addMessage(new MessageJsonProvider());</span>
+<span class="fc" id="L145">        jsonProviders.addPattern(new LoggingEventPatternJsonProvider());</span>
+<span class="fc" id="L146">        jsonProviders.addStackTrace(stackTraceJsonProvider());</span>
+<span class="fc" id="L147">        jsonProviders.addThreadName(new ThreadNameJsonProvider());</span>
+<span class="fc" id="L148">        jsonProviders.addTimestamp(timestampJsonProvider());</span>
+<span class="fc" id="L149">        jsonProviders.setContext(context);</span>
+<span class="fc" id="L150">        return jsonProviders;</span>
+    }
+
+    private GlobalCustomFieldsJsonProvider&lt;ILoggingEvent&gt; customFieldsJsonProvider() {
+<span class="fc" id="L154">        final GlobalCustomFieldsJsonProvider&lt;ILoggingEvent&gt; customFieldsJsonProvider = new GlobalCustomFieldsJsonProvider&lt;&gt;();</span>
+<span class="fc" id="L155">        customFieldsJsonProvider.setCustomFields(customFields());</span>
+<span class="fc" id="L156">        return customFieldsJsonProvider;</span>
+    }
+
+    private String customFields () {
+<span class="fc" id="L160">        StringBuilder customFields = new StringBuilder();</span>
+<span class="fc" id="L161">        customFields.append(&quot;{&quot;);</span>
+<span class="fc" id="L162">        customFields.append(&quot;\&quot;app_name\&quot;:\&quot;&quot;).append(this.appName).append(&quot;\&quot;&quot;);</span>
+<span class="fc" id="L163">        customFields.append(&quot;,&quot;).append(&quot;\&quot;app_port\&quot;:\&quot;&quot;).append(this.serverPort).append(&quot;\&quot;&quot;);</span>
+<span class="fc" id="L164">        customFields.append(&quot;,&quot;).append(&quot;\&quot;version\&quot;:\&quot;&quot;).append(this.version).append(&quot;\&quot;&quot;);</span>
+<span class="fc" id="L165">        customFields.append(&quot;}&quot;);</span>
+<span class="fc" id="L166">        return customFields.toString();</span>
+    }
+    
+    private LoggerNameJsonProvider loggerNameJsonProvider() {
+<span class="fc" id="L170">        final LoggerNameJsonProvider loggerNameJsonProvider = new LoggerNameJsonProvider();</span>
+<span class="fc" id="L171">        loggerNameJsonProvider.setShortenedLoggerNameLength(20);</span>
+<span class="fc" id="L172">        return loggerNameJsonProvider;</span>
+    }
+    
+    private StackTraceJsonProvider stackTraceJsonProvider() {
+<span class="fc" id="L176">        StackTraceJsonProvider stackTraceJsonProvider = new StackTraceJsonProvider();</span>
+<span class="fc" id="L177">        stackTraceJsonProvider.setThrowableConverter(throwableConverter());</span>
+<span class="fc" id="L178">        return stackTraceJsonProvider;</span>
+    }
+
+    private ShortenedThrowableConverter throwableConverter() {
+<span class="fc" id="L182">        final ShortenedThrowableConverter throwableConverter = new ShortenedThrowableConverter();</span>
+<span class="fc" id="L183">        throwableConverter.setRootCauseFirst(true);</span>
+<span class="fc" id="L184">        return throwableConverter;</span>
+    }
+    
+    private LoggingEventFormattedTimestampJsonProvider timestampJsonProvider() {
+<span class="fc" id="L188">        final LoggingEventFormattedTimestampJsonProvider timestampJsonProvider = new LoggingEventFormattedTimestampJsonProvider();</span>
+<span class="fc" id="L189">        timestampJsonProvider.setTimeZone(&quot;UTC&quot;);</span>
+<span class="fc" id="L190">        timestampJsonProvider.setFieldName(&quot;timestamp&quot;);</span>
+<span class="fc" id="L191">        return timestampJsonProvider;</span>
+    }
+
+    private void addContextListener(LoggerContext context) {
+<span class="fc" id="L195">        LogbackLoggerContextListener loggerContextListener = new LogbackLoggerContextListener(this.jHipsterProperties);</span>
+<span class="fc" id="L196">        loggerContextListener.setContext(context);</span>
+<span class="fc" id="L197">        context.addListener(loggerContextListener);</span>
+<span class="fc" id="L198">    }</span>
+
+    // Configure a log filter to remove &quot;metrics&quot; logs from all appenders except the &quot;LOGSTASH&quot; appender
+    private void setMetricsMarkerLogbackFilter(LoggerContext context) {
+<span class="fc" id="L202">        log.info(&quot;Filtering metrics logs from all appenders except the {} appender&quot;, LOGSTASH_APPENDER_NAME);</span>
+<span class="fc" id="L203">        OnMarkerEvaluator onMarkerMetricsEvaluator = new OnMarkerEvaluator();</span>
+<span class="fc" id="L204">        onMarkerMetricsEvaluator.setContext(context);</span>
+<span class="fc" id="L205">        onMarkerMetricsEvaluator.addMarker(&quot;metrics&quot;);</span>
+<span class="fc" id="L206">        onMarkerMetricsEvaluator.start();</span>
+<span class="fc" id="L207">        EvaluatorFilter&lt;ILoggingEvent&gt; metricsFilter = new EvaluatorFilter&lt;&gt;();</span>
+<span class="fc" id="L208">        metricsFilter.setContext(context);</span>
+<span class="fc" id="L209">        metricsFilter.setEvaluator(onMarkerMetricsEvaluator);</span>
+<span class="fc" id="L210">        metricsFilter.setOnMatch(FilterReply.DENY);</span>
+<span class="fc" id="L211">        metricsFilter.start();</span>
+
+<span class="fc" id="L213">        context.getLoggerList().forEach((logger) -&gt; {</span>
+<span class="fc bfc" id="L214" title="All 2 branches covered.">            for (Iterator&lt;Appender&lt;ILoggingEvent&gt;&gt; it = logger.iteratorForAppenders(); it.hasNext();) {</span>
+<span class="fc" id="L215">                Appender&lt;ILoggingEvent&gt; appender = it.next();</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">                if (!appender.getName().equals(ASYNC_LOGSTASH_APPENDER_NAME)</span>
+<span class="pc bpc" id="L217" title="1 of 4 branches missed.">                        &amp;&amp; !(appender.getName().equals(CONSOLE_APPENDER_NAME) &amp;&amp; this.jHipsterProperties.getLogging().isUseJsonFormat())) {</span>
+<span class="fc" id="L218">                    log.debug(&quot;Filter metrics logs from the {} appender&quot;, appender.getName());</span>
+<span class="fc" id="L219">                    appender.setContext(context);</span>
+<span class="fc" id="L220">                    appender.addFilter(metricsFilter);</span>
+<span class="fc" id="L221">                    appender.start();</span>
+                }
+<span class="fc" id="L223">            }</span>
+<span class="fc" id="L224">        });</span>
+<span class="fc" id="L225">    }</span>
+
+    /**
+     * Logback configuration is achieved by configuration file and API.
+     * When configuration file change is detected, the configuration is reset.
+     * This listener ensures that the programmatic configuration is also re-applied after reset.
+     */
+    class LogbackLoggerContextListener extends ContextAwareBase implements LoggerContextListener {
+        private final JHipsterProperties jHipsterProperties;
+        
+<span class="fc" id="L235">        private LogbackLoggerContextListener(JHipsterProperties jHipsterProperties) {</span>
+<span class="fc" id="L236">            this.jHipsterProperties = jHipsterProperties;</span>
+<span class="fc" id="L237">        }</span>
+        
+        @Override
+        public boolean isResetResistant() {
+<span class="fc" id="L241">            return true;</span>
+        }
+
+        @Override
+        public void onStart(LoggerContext context) {
+<span class="nc bnc" id="L246" title="All 2 branches missed.">            if (this.jHipsterProperties.getLogging().isUseJsonFormat()) {</span>
+<span class="nc" id="L247">                addJsonConsoleAppender(context);</span>
+            }
+<span class="nc bnc" id="L249" title="All 2 branches missed.">            if (this.jHipsterProperties.getLogging().getLogstash().isEnabled()) {</span>
+<span class="nc" id="L250">                addLogstashTcpSocketAppender(context);</span>
+            }
+<span class="nc" id="L252">        }</span>
+
+        @Override
+        public void onReset(LoggerContext context) {
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">            if (this.jHipsterProperties.getLogging().isUseJsonFormat()) {</span>
+<span class="fc" id="L257">                addJsonConsoleAppender(context);</span>
+            }
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">            if (this.jHipsterProperties.getLogging().getLogstash().isEnabled()) {</span>
+<span class="fc" id="L260">                addLogstashTcpSocketAppender(context);</span>
+            }
+<span class="fc" id="L262">        }</span>
+
+        @Override
+        public void onStop(LoggerContext context) {
+            // Nothing to do.
+<span class="fc" id="L267">        }</span>
+
+        @Override
+        public void onLevelChange(ch.qos.logback.classic.Logger logger, Level level) {
+            // Nothing to do.
+<span class="nc" id="L272">        }</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.3.201901230119</span></div></body></html>
