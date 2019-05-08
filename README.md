@@ -29,3 +29,23 @@ To quickly be able to deploy microservices with one command.
 # deploy
 
 `cd docker-compose` and deploy with `docker-compose up -d`
+
+# deployment expected output
+
+```
+Starting docker-compose_gateway-mongodb_1        ... done
+Starting docker-compose_uaa-mongodb_1            ... done
+Starting docker-compose_jhipster-registry_1      ... done
+Starting uaa-mongodb-config                      ... done
+Starting docker-compose_uaa-mongodb-node_1       ... done
+Starting docker-compose_uaa-app_1                ... done
+Starting docker-compose_api-mongodb_1            ... done
+Starting docker-compose_gateway-app_1            ... done
+Starting docker-compose_jhipster-elasticsearch_1 ... done
+Starting docker-compose_api-app_1                ... done
+Starting docker-compose_api-elasticsearch_1      ... done
+Starting docker-compose_jhipster-logstash_1          ... done
+Starting docker-compose_jhipster-import-dashboards_1 ... done
+Starting docker-compose_jhipster-zipkin_1            ... done
+Starting docker-compose_jhipster-console_1           ... done
+```
